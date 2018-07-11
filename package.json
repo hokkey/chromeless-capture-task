@@ -8,5 +8,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "MIT",
+  "dependencies": {
+    "chrome-launcher": "^0.10.2",
+    "chromeless": "^1.5.2"
+  }
 }
