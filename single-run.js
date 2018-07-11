@@ -3,7 +3,7 @@ const chromeLauncher = require('chrome-launcher');
 const { Chromeless } = require('chromeless');
 
 // 撮影対象URL
-const url = 'https://qiita.com/';
+const url = 'https://yahoo.com/';
 
 // 保存先パス
 const savePath = './output/';
@@ -46,8 +46,29 @@ const chromelessOptions = {
   // URLへ遷移してtitleを取得
   let title = await chromeless.goto(url).evaluate(() => document.title.replace(/[\/\\?:"*|]/g, '-'));
 
+  // titleが取得できない場合はURLを代わりに使う
   if (!title) {
-    throw new Error(`ERROR: Could not get the document.title from "${url}"`);
+    console.log(`INFO: Could not get the document.title from "${url}"`);
+    title = url.replace(/https:\/\//, '').replace(/\//, '');
+  }
+
+  // ウィンドウの高さに合わせてviewportを変更
+  const winHeight = await chromeless.evaluate(() => {
+    return Math.max(
+      document.documentElement["clientHeight"],
+      document.body["scrollHeight"],
+      document.documentElement["scrollHeight"],
+      document.body["offsetHeight"],
+      document.documentElement["offsetHeight"]
+    );
+  });
+
+  if (winHeight > chromelessOptions.viewport.height) {
+    console.log(winHeight);
+    await chromeless.setViewport({
+      height: winHeight,
+      width: chromelessOptions.viewport.width
+    }).goto(url);
   }
 
   // スクリーンショットを撮影
@@ -56,7 +77,7 @@ const chromelessOptions = {
     filePath: `${savePath}${title}.png`
   });
 
-  console.log('Screenshot was saved at ' + result);
+  console.info(`${result} was saved successfully.`);
 
   // chromelessを終了
   await chromeless.end();
