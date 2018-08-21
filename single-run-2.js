@@ -2,8 +2,11 @@ const fs = require('fs');
 const chromeLauncher = require('chrome-launcher');
 const { Chromeless } = require('chromeless');
 
-const CHROME_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15';
-const IPHONE_SAFARI_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1';
+const UA = {
+  CHROME: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
+  IPHONE_SAFARI: 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
+};
+
 
 // 撮影対象URL
 const url = {
@@ -15,6 +18,9 @@ const url = {
   // 保存先
   outputDir: 'output/yahoo/',
 
+  // 実行の度に別のディレクトリへ保存する
+  useIncrementalMode: true,
+
   // ファイル名にtitle要素の文字列を使用する
   useTitleAsFileName: true,
 
@@ -24,37 +30,46 @@ const url = {
   // ファイル名サフィックス
   fileNameSuffix: '_screenshot',
 
-  // 撮影対象となる要素セレクタ
-  screenshotSelector: 'html',
-
-  // ViewportサイズをWindowに合わせて拡大する
-  useViewportExpanding: true,
-
   // 撮影したいviewportとUAの種類
   deviceEnvironments: [
     {
+      // 環境名・ファイル保存時にも使用
       name: '1080p',
+
+      // viewport
       width: 1920,
       height: 1080,
       scale: 1,
-      userAgent: CHROME_UA,
-      mobile: false
+      mobile: false,
+
+      // UserAgent
+      userAgent: UA.CHROME,
+
+      // 撮影対象となる要素セレクタ
+      screenshotSelector: 'html',
+
+      // ViewportサイズをWindowに合わせて拡大する
+      useViewportExpanding: true,
     },
     {
       name: 'xga',
       width: 1024,
       height: 768,
       scale: 1,
-      userAgent: CHROME_UA,
-      mobile: false
+      mobile: false,
+      userAgent: UA.CHROME,
+      screenshotSelector: 'html',
+      useViewportExpanding: true,
     },
     {
       name: 'mobile',
       width: 520,
       height: 720,
       scale: 1,
-      userAgent: IPHONE_SAFARI_UA,
-      mobile: true
+      mobile: true,
+      userAgent: UA.IPHONE_SAFARI,
+      screenshotSelector: 'html',
+      useViewportExpanding: true,
     }
   ],
 };
@@ -137,7 +152,7 @@ const chromelessOptions = {
     }
 
     // ウィンドウの高さに合わせてviewportを変更
-    if (url.useViewportExpanding && pageInfo.winHeight > viewport.height) {
+    if (viewport.useViewportExpanding && pageInfo.winHeight > viewport.height) {
       await chromeless
         .setViewport({
           height: pageInfo.winHeight,
@@ -154,7 +169,7 @@ const chromelessOptions = {
 
     // スクリーンショットを保存
     await chromeless
-      .screenshot(url.screenshotSelector, { filePath: fileName })
+      .screenshot(viewport.screenshotSelector, { filePath: fileName })
       .catch((reason => {
         console.error(reason);
       }))
